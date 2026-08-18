@@ -1,0 +1,28 @@
+services:
+  storefront:
+    build:
+      context: .
+      dockerfile: docker/storefront/Dockerfile
+    container_name: emc-storefront
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  admin:
+    build:
+      context: .
+      dockerfile: docker/admin/Dockerfile
+    container_name: emc-admin
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

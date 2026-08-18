@@ -1,0 +1,308 @@
+name: E2E Tests
+
+# E2E chạy sau khi CI chính pass, hoặc có thể trigger thủ công
+# Không chạy trên mọi commit nhỏ để tiết kiệm chi phí, nhưng BẮT BUỘC trên PR vào main
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: # cho phép chạy tay khi cần debug
+  schedule:
+    # Chạy full E2E suite mỗi đêm trên main để phát hiện flaky/regression sớm
+    - cron: '0 19 * * *' # 19:00 UTC = 02:00 giờ VN
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # ============================================================
+  # JOB 1: Build app + start server để test nhắm vào bản build thật
+  # Không test trên dev server — dev server có thể che giấu bug production
+  # ============================================================
+  build-for-e2e:
+    name: Build App for E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build storefront (production mode)
+        run: npx turbo run build --filter=storefront
+        env:
+          VITE_API_URL: ${{ vars.E2E_API_URL }}
+          NODE_ENV: production
+
+      - name: Upload build for reuse across shards
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-build
+          path: apps/storefront/dist
+          retention-days: 1
+
+  # ============================================================
+  # JOB 2: Chạy Playwright — matrix đa trình duyệt + đa viewport
+  # Nghiêm ngặt: test PHẢI pass trên cả 3 engine (Chromium, Firefox, WebKit)
+  # ============================================================
+  e2e:
+    name: E2E (${{ matrix.browser }} / ${{ matrix.viewport }})
+    needs: build-for-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false # để thấy hết lỗi ở mọi browser, không dừng giữa chừng
+      matrix:
+        browser: [chromium, firefox, webkit]
+        viewport: [desktop, mobile]
+        # Loại bỏ tổ hợp không cần thiết (webkit mobile đã cover Safari iOS rồi)
+        exclude:
+          - browser: firefox
+            viewport: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download built app
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-build
+          path: apps/storefront/dist
+
+      - name: Install Playwright browsers (with system deps)
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Start app server
+        run: npx serve apps/storefront/dist -l 4173 &
+        env:
+          PORT: 4173
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:4173 --timeout 60000
+
+      # --forbid-only: nếu ai đó lỡ để test.only(), CI phải fail, không được im lặng skip test khác
+      # --retries=2: chỉ retry để chống flaky do network, không phải để che giấu bug thật
+      - name: Run Playwright tests
+        run: >
+          npx playwright test
+          --project=${{ matrix.browser }}
+          --grep-invert @skip-${{ matrix.viewport }}
+          --forbid-only
+          --retries=2
+          --reporter=html,github,json
+        env:
+          BASE_URL: http://localhost:4173
+          VIEWPORT: ${{ matrix.viewport }}
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ matrix.viewport }}
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test traces on failure (để debug bằng Playwright Trace Viewer)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ matrix.browser }}-${{ matrix.viewport }}
+          path: test-results/
+          retention-days: 14
+
+  # ============================================================
+  # JOB 3: Critical path — checkout & payment PHẢI pass 100%, không cho flaky
+  # Test riêng, không retry, để đảm bảo tính ổn định tuyệt đối cho luồng tiền
+  # ============================================================
+  e2e-critical-path:
+    name: Critical Path (Checkout & Payment) — Zero Tolerance
+    needs: build-for-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-build
+          path: apps/storefront/dist
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npx serve apps/storefront/dist -l 4173 &
+
+      - run: npx wait-on http://localhost:4173 --timeout 60000
+
+      # Không có --retries: nếu checkout/payment flaky dù chỉ 1 lần, phải fail và điều tra ngay
+      - name: Run checkout & payment E2E (no retries allowed)
+        run: >
+          npx playwright test
+          --project=chromium
+          --grep="@critical"
+          --forbid-only
+          --retries=0
+          --workers=1
+        env:
+          BASE_URL: http://localhost:4173
+          CI: true
+          PAYMENT_GATEWAY_MODE: sandbox
+
+      - name: Upload critical path report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-critical-path-report
+          path: playwright-report/
+          retention-days: 30 # giữ lâu hơn vì đây là bằng chứng audit cho luồng thanh toán
+
+  # ============================================================
+  # JOB 4: Visual regression testing (Playwright screenshot comparison)
+  # ============================================================
+  visual-regression:
+    name: Visual Regression
+    needs: build-for-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-build
+          path: apps/storefront/dist
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npx serve apps/storefront/dist -l 4173 &
+
+      - run: npx wait-on http://localhost:4173 --timeout 60000
+
+      # maxDiffPixelRatio nghiêm ngặt: chỉ cho phép sai lệch < 0.1% pixel
+      - name: Run visual regression tests
+        run: >
+          npx playwright test
+          --project=chromium
+          --grep="@visual"
+          --update-snapshots=none
+        env:
+          BASE_URL: http://localhost:4173
+
+      - name: Upload diff screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-screenshots
+          path: test-results/**/*.png
+          retention-days: 14
+
+  # ============================================================
+  # JOB 5: Accessibility (a11y) testing — bắt buộc cho TMĐT (pháp lý + UX)
+  # ============================================================
+  a11y:
+    name: Accessibility Audit (axe-core)
+    needs: build-for-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-build
+          path: apps/storefront/dist
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npx serve apps/storefront/dist -l 4173 &
+
+      - run: npx wait-on http://localhost:4173 --timeout 60000
+
+      # Chặn merge nếu có vi phạm WCAG 2.1 AA mức critical/serious
+      - name: Run a11y tests (WCAG 2.1 AA, fail on critical/serious)
+        run: >
+          npx playwright test
+          --project=chromium
+          --grep="@a11y"
+        env:
+          BASE_URL: http://localhost:4173
+          A11Y_FAIL_LEVEL: critical,serious
+
+  # ============================================================
+  # JOB 6: Gatekeeper cho toàn bộ E2E suite
+  # ============================================================
+  e2e-gate:
+    name: E2E Gate ✅
+    if: always()
+    needs: [e2e, e2e-critical-path, visual-regression, a11y]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all E2E jobs succeeded
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ] || \
+             [ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]; then
+            echo "::error::E2E suite thất bại. Không được phép merge/deploy."
+            exit 1
+          fi
+          echo "Toàn bộ E2E suite đã pass (functional, critical path, visual, a11y)."
+
+      - name: Comment result on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const success = '${{ needs.e2e.result }}' === 'success' &&
+                             '${{ needs.e2e-critical-path.result }}' === 'success' &&
+                             '${{ needs.visual-regression.result }}' === 'success' &&
+                             '${{ needs.a11y.result }}' === 'success';
+            const body = success
+              ? '✅ E2E suite pass: functional (3 trình duyệt), critical path (checkout/payment), visual regression, và a11y (WCAG 2.1 AA).'
+              : '❌ E2E suite thất bại. Xem chi tiết ở tab Checks trước khi merge.';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

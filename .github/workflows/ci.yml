@@ -1,0 +1,414 @@
+name: CI
+
+# Chạy trên mọi PR hướng vào main/develop và mọi push vào main/develop
+# Không cho phép bỏ qua bước nào — mọi job đều bắt buộc (required check trên GitHub)
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+# Huỷ các lần chạy cũ hơn của cùng 1 PR khi có commit mới, tránh lãng phí runner
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Quyền tối thiểu — nguyên tắc least privilege
+permissions:
+  contents: read
+  pull-requests: write # để comment coverage report lên PR
+
+env:
+  NODE_VERSION: '20.x'
+  # Bắt buộc CI fail nếu có warning khi build (không cho "warning trôi qua")
+  CI: true
+
+jobs:
+  # ============================================================
+  # JOB 0: Cài đặt dependencies và cache
+  # ============================================================
+  setup:
+    name: Setup & Cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # cần full history để turbo tính affected chính xác
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies (frozen lockfile — không cho tự ý update)
+        run: npm ci
+
+      # Cache Turbo với key thống nhất để downstream jobs restore được
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: turbo-
+
+  # ============================================================
+  # JOB 1: Lint — ESLint + Prettier check
+  # Zero warnings allowed
+  # ============================================================
+  lint:
+    name: Lint
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: turbo-
+
+      # --max-warnings 0: bất kỳ warning nào cũng làm fail job, không riêng error
+      - name: ESLint (zero warnings policy)
+        run: npx turbo run lint -- --max-warnings=0
+
+      - name: Prettier format check
+        run: npm run format:check
+
+      - name: Check for banned patterns (console.log, debugger, .only trong test)
+        run: |
+          if grep -rn --include="*.ts" --include="*.tsx" \
+            -E "console\.(log|debug)|debugger;|\.only\(" \
+            --exclude-dir={node_modules,dist,.next,.turbo} apps/ packages/ 2>/dev/null; then
+            echo "::error::Phát hiện console.log/debugger/.only còn sót lại trong code. Chặn merge."
+            exit 1
+          fi
+
+  # ============================================================
+  # JOB 2: Type check — strict mode, không cho phép 'any' ngầm
+  # ============================================================
+  typecheck:
+    name: Type Check
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: turbo-
+
+      # tsconfig bật: strict, noUnusedLocals, noUnusedParameters, noUncheckedIndexedAccess
+      - name: TypeScript strict check
+        run: npx turbo run type-check
+
+  # ============================================================
+  # JOB 3: Unit + Integration test — coverage threshold cứng
+  # Vitest built-in coverage thresholds — fail nếu dưới ngưỡng
+  # ============================================================
+  test:
+    name: Unit & Integration Tests
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: turbo-
+
+      # Chạy test + coverage cho toàn bộ monorepo
+      # Coverage thresholds được enforce trong vitest.config.ts của mỗi package
+      - name: Run tests with coverage
+        run: npx turbo run test -- --coverage
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            apps/*/coverage/
+            packages/*/coverage/
+          retention-days: 7
+
+      - name: Comment coverage summary on PR
+        if: github.event_name == 'pull_request' && success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('📊 Coverage report')
+            );
+            const body = '📊 Coverage report đã pass ngưỡng tối thiểu (statements 80%, branches 75%, functions 80%, lines 80%).';
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
+
+  # ============================================================
+  # JOB 4: Build — đảm bảo build production thành công, không warning
+  # ============================================================
+  build:
+    name: Build (${{ matrix.app }})
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        app: [storefront, admin]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: turbo-
+
+      # Dùng @emc/ prefix vì package name trong package.json là @emc/storefront, @emc/admin
+      - name: Build @emc/${{ matrix.app }}
+        run: npx turbo run build --filter=@emc/${{ matrix.app }}...
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.app }}
+          path: apps/${{ matrix.app }}/dist
+          retention-days: 3
+
+  # ============================================================
+  # JOB 5: Security audit — chặn dependency có lỗ hổng nghiêm trọng
+  # ============================================================
+  security-audit:
+    name: Security Audit
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Chặn merge nếu có lỗ hổng mức high/critical
+      - name: npm audit (fail on high/critical)
+        run: npm audit --audit-level=high
+
+      # Pin version cụ thể — không dùng @main để tránh breaking changes bất ngờ
+      - name: Scan for hardcoded secrets
+        uses: trufflesecurity/trufflehog@v3.88.0
+        with:
+          extra_args: --only-verified
+
+  # ============================================================
+  # JOB 6: Docker Build & Verification
+  # Dockerfile tự build từ source (multi-stage) → không cần chờ job build
+  # ============================================================
+  docker-build:
+    name: Docker Build (${{ matrix.app }})
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        app: [storefront, admin]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image (${{ matrix.app }})
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/${{ matrix.app }}/Dockerfile
+          push: false
+          tags: emc-${{ matrix.app }}:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke Test Docker Container (${{ matrix.app }})
+        run: |
+          # Start container
+          docker run -d --name test-${{ matrix.app }} -p 8080:80 emc-${{ matrix.app }}:test
+
+          # Retry loop — chờ container ready tối đa 30 giây thay vì sleep cứng
+          echo "Đang chờ container emc-${{ matrix.app }} khởi động..."
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✅ Healthcheck thành công sau ${i}x2 giây"
+              break
+            fi
+            if [ "$i" -eq 15 ]; then
+              echo "::error::Healthcheck timeout sau 30 giây cho emc-${{ matrix.app }}"
+              docker logs test-${{ matrix.app }}
+              docker rm -f test-${{ matrix.app }}
+              exit 1
+            fi
+            sleep 2
+          done
+
+          # Check root page returns 200 OK
+          HTTP_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/)
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Trang chính trả về status ${HTTP_STATUS} thay vì 200 cho emc-${{ matrix.app }}"
+            docker logs test-${{ matrix.app }}
+            docker rm -f test-${{ matrix.app }}
+            exit 1
+          fi
+
+          echo "✅ Container emc-${{ matrix.app }} hoạt động hoàn hảo!"
+
+          # Cleanup
+          docker rm -f test-${{ matrix.app }}
+
+  # ============================================================
+  # JOB 7: E2E Tests — Playwright trên 3 trình duyệt
+  # ============================================================
+  e2e:
+    name: E2E Tests (${{ matrix.browser }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Download build artifact từ job build
+      - name: Download storefront build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-storefront
+          path: apps/storefront/dist
+
+      # Cài Playwright browsers
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      # Serve build tĩnh + chạy E2E tests
+      - name: Run E2E Tests (${{ matrix.browser }})
+        run: |
+          # Start static server ở background
+          npx serve apps/storefront/dist -l 4173 &
+          SERVER_PID=$!
+
+          # Chờ server ready
+          npx wait-on http://localhost:4173 --timeout 15000
+
+          # Chạy Playwright tests cho browser cụ thể
+          npx playwright test --project=${{ matrix.browser }} --reporter=github,html
+
+          # Tắt server
+          kill $SERVER_PID || true
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # ============================================================
+  # JOB 8: Gatekeeper — job tổng hợp, dùng làm "required status check" duy nhất
+  # Branch protection chỉ cần trỏ vào job này
+  # ============================================================
+  all-checks-passed:
+    name: All Checks Passed ✅
+    if: always()
+    needs: [lint, typecheck, test, build, security-audit, docker-build, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all jobs succeeded
+        run: |
+          echo "=== Job Results ==="
+          echo "lint:           ${{ needs.lint.result }}"
+          echo "typecheck:      ${{ needs.typecheck.result }}"
+          echo "test:           ${{ needs.test.result }}"
+          echo "build:          ${{ needs.build.result }}"
+          echo "security-audit: ${{ needs.security-audit.result }}"
+          echo "docker-build:   ${{ needs.docker-build.result }}"
+          echo "e2e:            ${{ needs.e2e.result }}"
+          echo "==================="
+
+          if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ] || \
+             [ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]; then
+            echo "::error::Một hoặc nhiều job đã fail. Chặn merge."
+            exit 1
+          fi
+          echo "✅ Tất cả các kiểm tra đã pass."
