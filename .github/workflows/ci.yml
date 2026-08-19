@@ -176,9 +176,9 @@ jobs:
               repo: context.repo.repo,
             });
             const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('📊 Coverage report')
+              c.user.type === 'Bot' && c.body.includes('Coverage report')
             );
-            const body = '📊 Coverage report đã pass ngưỡng tối thiểu (statements 80%, branches 75%, functions 80%, lines 80%).';
+            const body = 'Coverage report đã pass ngưỡng tối thiểu (statements 80%, branches 75%, functions 80%, lines 80%).';
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -322,7 +322,7 @@ jobs:
           echo "Đang chờ container emc-${{ matrix.app }} khởi động..."
           for i in $(seq 1 15); do
             if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
-              echo "✅ Healthcheck thành công sau ${i}x2 giây"
+              echo "Healthcheck thành công sau ${i}x2 giây"
               break
             fi
             if [ "$i" -eq 15 ]; then
@@ -343,7 +343,7 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Container emc-${{ matrix.app }} hoạt động hoàn hảo!"
+          echo "Container emc-${{ matrix.app }} hoạt động hoàn hảo!"
 
           # Cleanup
           docker rm -f test-${{ matrix.app }}
@@ -457,7 +457,7 @@ jobs:
   # E2E chạy riêng trong workflow e2e.yml — không nằm trong CI để không chặn merge
   # ============================================================
   all-checks-passed:
-    name: All Checks Passed ✅
+    name: All Checks Passed
     if: always()
     needs: [lint, typecheck, test, build, security-audit, docker-build, seo-check, lighthouse]
     runs-on: ubuntu-latest
@@ -480,4 +480,4 @@ jobs:
             echo "::error::Một hoặc nhiều job đã fail. Chặn merge."
             exit 1
           fi
-          echo "✅ Tất cả các kiểm tra đã pass."
+          echo "Tất cả các kiểm tra đã pass."

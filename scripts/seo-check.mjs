@@ -140,8 +140,8 @@ async function main() {
     lines.push('');
     process.exitCode = 1;
   } else {
-    lines.push('✅ All SEO checks passed.');
-    console.log('✅ SEO checks passed.');
+    lines.push('All SEO checks passed.');
+    console.log('SEO checks passed.');
   }
 
   const { mkdir, writeFile } = await import('node:fs/promises');

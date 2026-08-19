@@ -292,7 +292,7 @@ jobs:
   # JOB 6: Gatekeeper cho toàn bộ E2E suite
   # ============================================================
   e2e-gate:
-    name: E2E Gate ✅
+    name: E2E Gate
     if: always()
     needs: [e2e, e2e-critical-path, visual-regression, a11y]
     runs-on: ubuntu-latest
@@ -316,8 +316,8 @@ jobs:
                              '${{ needs.visual-regression.result }}' === 'success' &&
                              '${{ needs.a11y.result }}' === 'success';
             const body = success
-              ? '✅ E2E suite pass: functional (3 trình duyệt), critical path (checkout/payment), visual regression, và a11y (WCAG 2.1 AA).'
-              : '❌ E2E suite thất bại. Xem chi tiết ở tab Checks trước khi merge.';
+              ? 'E2E suite pass: functional (3 trình duyệt), critical path (checkout/payment), visual regression, và a11y (WCAG 2.1 AA).'
+              : 'E2E suite thất bại. Xem chi tiết ở tab Checks trước khi merge.';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
