@@ -16,6 +16,7 @@ concurrency:
 # Quyền tối thiểu — nguyên tắc least privilege
 permissions:
   contents: read
+  actions: write # cần để upload/download build artifact giữa các job (download-artifact@v4 cần actions: read)
   pull-requests: write # để comment coverage report lên PR
 
 env:
@@ -207,8 +208,12 @@ jobs:
         app: [storefront, admin]
         include:
           # Storefront build ra .next (Next.js), admin build ra dist (Vite)
+          # Upload nhiều path để LCA = apps/storefront, artifact giữ cấu trúc .next/ và public/
+          # (giống e2e.yml) — nếu upload 1 path, .next bị flatten và next start không tìm thấy build
           - app: storefront
-            artifact_path: apps/storefront/.next
+            artifact_path: |
+              apps/storefront/.next
+              apps/storefront/public
             artifact_exclude: |
               apps/storefront/.next/cache/**
           - app: admin

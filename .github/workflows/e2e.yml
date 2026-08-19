@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write # cần để download-artifact@v4 giữa các job (yêu cầu actions: read)
   pull-requests: write
   checks: write
 
