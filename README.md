@@ -5,12 +5,14 @@ Monorepo chứa các ứng dụng frontend cho hệ thống thương mại đi�
 ## Tech Stack
 
 - **Framework:** React 19 + TypeScript
-- **Build Tool:** Vite
+- **Storefront:** Next.js 16 (App Router, SEO-ready: metadata, sitemap, robots, JSON-LD, OG image)
+- **Admin:** Vite
 - **Styling:** Tailwind CSS 4
 - **Monorepo:** Turborepo
 - **State Management:** TanStack Query (server) + Zustand (client)
 - **Forms:** React Hook Form + Zod
-- **Testing:** Vitest + React Testing Library
+- **Testing:** Vitest + React Testing Library + Playwright (E2E)
+- **SEO checks (CI):** scripts/seo-check.mjs + Lighthouse CI
 
 ## Cấu trúc dự án
 
@@ -56,9 +58,8 @@ npm run format
 
 ```
 src/
-├── app/           → Bootstrap, providers, routing
+├── app/           → Bootstrap, providers, routing (App Router route segments)
 ├── processes/     → Multi-step workflows
-├── pages/         → Route-level compositions
 ├── widgets/       → Large UI blocks
 ├── features/      → User-driven capabilities
 ├── entities/      → Business domain objects

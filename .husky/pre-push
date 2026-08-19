@@ -1,0 +1,17 @@
+# Khắt khe: chặn push nếu bất kỳ kiểm tra nào fail
+echo "🔍 Running full checks before push (lint, type-check, test, format)..."
+npx turbo run lint type-check 2>&1
+STATIC_RESULT=$?
+
+npx turbo run test -- --coverage 2>&1
+TEST_RESULT=$?
+
+npm run format:check 2>&1
+FORMAT_RESULT=$?
+
+if [ $STATIC_RESULT -ne 0 ] || [ $TEST_RESULT -ne 0 ] || [ $FORMAT_RESULT -ne 0 ]; then
+  echo "❌ Push bị chặn: lint/type-check/test/format có lỗi. Vui lòng sửa trước khi push."
+  exit 1
+fi
+
+echo "✅ Tất cả kiểm tra pass. Push OK."

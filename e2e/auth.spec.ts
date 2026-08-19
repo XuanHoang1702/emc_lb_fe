@@ -22,8 +22,6 @@ test.describe('Authentication', () => {
 
   test('should display register page', async ({ page }) => {
     await page.goto('/register');
-    await expect(
-      page.getByRole('heading', { name: /đăng ký|register|sign up/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /đăng ký|register|sign up/i })).toBeVisible();
   });
 });

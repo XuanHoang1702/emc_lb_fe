@@ -27,10 +27,13 @@ export function TopProducts({ items }: TopProductsProps) {
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 font-medium text-slate-700">
                   <span className="text-slate-400 text-xs font-normal">→</span>
-                  <span>{item.from} → {item.to}</span>
+                  <span>
+                    {item.from} → {item.to}
+                  </span>
                 </div>
                 <span className="font-semibold text-slate-700 tabular-nums text-[11px]">
-                  {item.tickets.toLocaleString()} <span className="font-normal text-slate-400">tickets</span>
+                  {item.tickets.toLocaleString()}{' '}
+                  <span className="font-normal text-slate-400">tickets</span>
                 </span>
               </div>
 

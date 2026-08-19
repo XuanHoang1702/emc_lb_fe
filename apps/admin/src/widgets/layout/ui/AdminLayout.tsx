@@ -25,14 +25,30 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none transition-colors"
               aria-label="Open menu"
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M3 5h14M3 10h14M3 15h14" />
               </svg>
             </button>
 
             {/* Breadcrumb / Title */}
             <div className="flex items-center gap-2 text-slate-700">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" className="text-slate-400">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                className="text-slate-400"
+              >
                 <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1.5" />
                 <rect x="11" y="2.5" width="6.5" height="6.5" rx="1.5" />
                 <rect x="2.5" y="11" width="6.5" height="6.5" rx="1.5" />
@@ -70,7 +86,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
               aria-label="Clock"
             >
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              >
                 <circle cx="10" cy="10" r="7" />
                 <path d="M10 6v4l2.5 1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -79,9 +102,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 w-full p-4 sm:p-6 lg:p-7">
-          {children}
-        </main>
+        <main className="flex-1 w-full p-4 sm:p-6 lg:p-7">{children}</main>
       </div>
     </div>
   );

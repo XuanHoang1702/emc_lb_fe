@@ -49,10 +49,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                 .slice(0, 2);
 
               return (
-                <tr
-                  key={order.id}
-                  className="hover:bg-slate-50/70 transition-colors duration-150"
-                >
+                <tr key={order.id} className="hover:bg-slate-50/70 transition-colors duration-150">
                   {/* Ticket ID */}
                   <td className="py-3.5 px-5 font-mono text-[11px] text-slate-500 font-medium">
                     {order.id}
@@ -64,16 +61,12 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                       <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200/80 flex items-center justify-center text-[10px] font-semibold text-slate-600 shrink-0">
                         {initials}
                       </div>
-                      <span className="font-medium text-slate-900 truncate">
-                        {order.customer}
-                      </span>
+                      <span className="font-medium text-slate-900 truncate">{order.customer}</span>
                     </div>
                   </td>
 
                   {/* Route */}
-                  <td className="py-3.5 px-5 text-slate-600 font-medium">
-                    {order.route}
-                  </td>
+                  <td className="py-3.5 px-5 text-slate-600 font-medium">{order.route}</td>
 
                   {/* Mode */}
                   <td className="py-3.5 px-5">

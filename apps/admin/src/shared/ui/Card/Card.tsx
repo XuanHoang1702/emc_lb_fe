@@ -26,9 +26,7 @@ export function CardHeader({ title, subtitle, action }: CardHeaderProps) {
     <div className="flex items-start justify-between px-5 pt-5 pb-2">
       <div>
         <h3 className="text-xs sm:text-sm font-semibold text-slate-900 tracking-tight">{title}</h3>
-        {subtitle ? (
-          <p className="text-[11px] text-slate-500 mt-0.5">{subtitle}</p>
-        ) : null}
+        {subtitle ? <p className="text-[11px] text-slate-500 mt-0.5">{subtitle}</p> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

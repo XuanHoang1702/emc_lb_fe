@@ -205,6 +205,15 @@ jobs:
     strategy:
       matrix:
         app: [storefront, admin]
+        include:
+          # Storefront build ra .next (Next.js), admin build ra dist (Vite)
+          - app: storefront
+            artifact_path: apps/storefront/.next
+            artifact_exclude: |
+              apps/storefront/.next/cache/**
+          - app: admin
+            artifact_path: apps/admin/dist
+            artifact_exclude: ''
     steps:
       - uses: actions/checkout@v4
 
@@ -230,7 +239,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.app }}
-          path: apps/${{ matrix.app }}/dist
+          path: ${{ matrix.artifact_path }}
+          exclude: ${{ matrix.artifact_exclude }}
           retention-days: 3
 
   # ============================================================
@@ -243,6 +253,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # TruffleHog cần full history để quét git secrets
 
       - uses: actions/setup-node@v4
         with:
@@ -251,9 +263,11 @@ jobs:
 
       - run: npm ci
 
-      # Chặn merge nếu có lỗ hổng mức high/critical
-      - name: npm audit (fail on high/critical)
-        run: npm audit --audit-level=high
+      # Chặn merge nếu production dependency có lỗ hổng mức high/critical.
+      # --omit=dev: các lỗ hổng trong dev tooling (vd: @lhci/cli) không vào
+      # production bundle nên không chặn merge; production deps vẫn audit nghiêm ngặt.
+      - name: npm audit (fail on high/critical in production deps)
+        run: npm audit --omit=dev --audit-level=high
 
       # Pin version cụ thể — không dùng @main để tránh breaking changes bất ngờ
       - name: Scan for hardcoded secrets
@@ -292,8 +306,11 @@ jobs:
 
       - name: Smoke Test Docker Container (${{ matrix.app }})
         run: |
+          # Storefront (Next.js) lắng nghe trên port 3000; admin (nginx) trên port 80
+          PORT_MAP=$([ "${{ matrix.app }}" = "storefront" ] && echo "8080:3000" || echo "8080:80")
+
           # Start container
-          docker run -d --name test-${{ matrix.app }} -p 8080:80 emc-${{ matrix.app }}:test
+          docker run -d --name test-${{ matrix.app }} -p ${PORT_MAP} emc-${{ matrix.app }}:test
 
           # Retry loop — chờ container ready tối đa 30 giây thay vì sleep cứng
           echo "Đang chờ container emc-${{ matrix.app }} khởi động..."
@@ -326,17 +343,14 @@ jobs:
           docker rm -f test-${{ matrix.app }}
 
   # ============================================================
-  # JOB 7: E2E Tests — Playwright trên 3 trình duyệt
+  # JOB 7: SEO Check — assert SEO contract trên bản build thật
+  # Kiểm tra title/description/canonical/OG/JSON-LD/robots/sitemap
   # ============================================================
-  e2e:
-    name: E2E Tests (${{ matrix.browser }})
+  seo-check:
+    name: SEO Check
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -347,51 +361,91 @@ jobs:
 
       - run: npm ci
 
-      # Download build artifact từ job build
       - name: Download storefront build
         uses: actions/download-artifact@v4
         with:
           name: build-storefront
-          path: apps/storefront/dist
+          path: apps/storefront
 
-      # Cài Playwright browsers
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Start storefront server
+        run: npx next start apps/storefront -p 3000 &
 
-      # Serve build tĩnh + chạy E2E tests
-      - name: Run E2E Tests (${{ matrix.browser }})
-        run: |
-          # Start static server ở background
-          npx serve apps/storefront/dist -l 4173 &
-          SERVER_PID=$!
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
 
-          # Chờ server ready
-          npx wait-on http://localhost:4173 --timeout 15000
+      # Chặn merge nếu thiếu title/description/canonical/OG/JSON-LD/robots/sitemap
+      - name: Run SEO assertions
+        run: node scripts/seo-check.mjs
+        env:
+          BASE_URL: http://localhost:3000
+          SITE_URL: https://emc.example.com
+          SEO_ROUTES: /
 
-          # Chạy Playwright tests cho browser cụ thể
-          npx playwright test --project=${{ matrix.browser }} --reporter=github,html
-
-          # Tắt server
-          kill $SERVER_PID || true
-
-      - name: Upload E2E test results
+      - name: Upload SEO report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-results-${{ matrix.browser }}
-          path: |
-            playwright-report/
-            test-results/
+          name: seo-report
+          path: seo-report/
           retention-days: 7
 
   # ============================================================
-  # JOB 8: Gatekeeper — job tổng hợp, dùng làm "required status check" duy nhất
+  # JOB 8: Lighthouse CI — đo SEO score + Core Web Vitals thật
+  # ============================================================
+  lighthouse:
+    name: Lighthouse (SEO & Performance)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download storefront build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-storefront
+          path: apps/storefront
+
+      - name: Install Chromium for Lighthouse
+        run: npx playwright install --with-deps chromium
+
+      - name: Resolve Chromium path
+        id: chrome-path
+        run: |
+          CHROME=$(find ~/.cache/ms-playwright -type f -name chrome -path '*chromium*' | head -1)
+          echo "path=${CHROME}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Lighthouse CI
+        run: npx lhci autorun --config=./lighthouserc.js
+        env:
+          # Dùng Chromium của Playwright (đã cài cùng system deps) để tránh
+          # phụ thuộc vào Chrome download riêng của puppeteer
+          CHROME_PATH: ${{ steps.chrome-path.outputs.path }}
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: lighthouse-report/
+          retention-days: 14
+
+  # ============================================================
+  # JOB 9: Gatekeeper — job tổng hợp, dùng làm "required status check" duy nhất
   # Branch protection chỉ cần trỏ vào job này
+  # E2E chạy riêng trong workflow e2e.yml — không nằm trong CI để không chặn merge
   # ============================================================
   all-checks-passed:
     name: All Checks Passed ✅
     if: always()
-    needs: [lint, typecheck, test, build, security-audit, docker-build, e2e]
+    needs: [lint, typecheck, test, build, security-audit, docker-build, seo-check, lighthouse]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
@@ -403,7 +457,8 @@ jobs:
           echo "build:          ${{ needs.build.result }}"
           echo "security-audit: ${{ needs.security-audit.result }}"
           echo "docker-build:   ${{ needs.docker-build.result }}"
-          echo "e2e:            ${{ needs.e2e.result }}"
+          echo "seo-check:      ${{ needs.seo-check.result }}"
+          echo "lighthouse:     ${{ needs.lighthouse.result }}"
           echo "==================="
 
           if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ] || \

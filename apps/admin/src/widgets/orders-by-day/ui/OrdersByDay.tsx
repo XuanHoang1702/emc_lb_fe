@@ -38,10 +38,7 @@ export function OrdersByDay({ data }: OrdersByDayProps) {
 
   return (
     <Card className="w-full h-full flex flex-col justify-between">
-      <CardHeader
-        title="Tickets sold by weekday"
-        subtitle="Current week performance"
-      />
+      <CardHeader title="Tickets sold by weekday" subtitle="Current week performance" />
 
       <div className="w-full px-4 sm:px-5 pb-4 pt-1 flex-1 flex flex-col justify-between">
         <div className="w-full overflow-hidden flex-1 flex items-center">

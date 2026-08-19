@@ -25,7 +25,8 @@ export function Button({
 
   const variantClasses: Record<string, string> = {
     primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-secondary-100 text-secondary-900 hover:bg-secondary-200 focus:ring-secondary-500',
+    secondary:
+      'bg-secondary-100 text-secondary-900 hover:bg-secondary-200 focus:ring-secondary-500',
     outline:
       'border border-secondary-300 text-secondary-700 hover:bg-secondary-50 focus:ring-primary-500',
     ghost: 'text-secondary-700 hover:bg-secondary-100 focus:ring-secondary-500',
@@ -38,7 +39,8 @@ export function Button({
     lg: 'px-6 py-3 text-lg',
   };
 
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`.trim();
+  const classes =
+    `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`.trim();
 
   return (
     <button className={classes} disabled={disabled || isLoading} {...props}>

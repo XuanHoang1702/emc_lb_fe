@@ -16,10 +16,14 @@ function buildSmoothPath(
 ): { linePath: string; areaPath: string } {
   if (points.length === 0) return { linePath: '', areaPath: '' };
 
-  let linePath = `M ${points[0]?.x ?? 0} ${points[0]?.y ?? 0}`;
+  const first = points[0];
+  if (!first) return { linePath: '', areaPath: '' };
+
+  let linePath = `M ${first.x} ${first.y}`;
   for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1]!;
-    const curr = points[i]!;
+    const prev = points[i - 1];
+    const curr = points[i];
+    if (!prev || !curr) continue;
     const cpx1 = prev.x + (curr.x - prev.x) / 2;
     const cpy1 = prev.y;
     const cpx2 = prev.x + (curr.x - prev.x) / 2;
@@ -27,8 +31,8 @@ function buildSmoothPath(
     linePath += ` C ${cpx1} ${cpy1}, ${cpx2} ${cpy2}, ${curr.x} ${curr.y}`;
   }
 
-  const first = points[0]!;
-  const last = points[points.length - 1]!;
+  const last = points[points.length - 1];
+  if (!last) return { linePath: '', areaPath: '' };
   const areaPath = `${linePath} L ${last.x} ${bottomY} L ${first.x} ${bottomY} Z`;
 
   return { linePath, areaPath };
@@ -163,10 +167,7 @@ export function RevenueChart({ data, series }: RevenueChartProps) {
         <div className="flex items-center justify-center gap-6 pt-3 border-t border-slate-100/80">
           {series.map((s) => (
             <div key={s.name} className="flex items-center gap-1.5">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
               <span className="text-[11px] font-medium text-slate-600">{s.name}</span>
             </div>
           ))}

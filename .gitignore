@@ -28,6 +28,10 @@ playwright-report/
 test-results/
 blob-report/
 
+# Lighthouse CI
+lighthouse-report/
+.lighthouseci/
+
 # IDE
 .vscode/
 .idea/
@@ -53,3 +57,4 @@ pnpm-debug.log*
 
 # Agent
 .agents/
+.gemini

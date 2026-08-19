@@ -22,10 +22,7 @@ test.describe('@a11y Accessibility Audit', () => {
     );
 
     if (criticalViolations.length > 0) {
-      console.error(
-        'A11y violations found:',
-        JSON.stringify(criticalViolations, null, 2),
-      );
+      console.error('A11y violations found:', JSON.stringify(criticalViolations, null, 2));
     }
 
     expect(criticalViolations).toHaveLength(0);

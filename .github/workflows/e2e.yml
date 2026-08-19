@@ -44,16 +44,21 @@ jobs:
       - run: npm ci
 
       - name: Build storefront (production mode)
-        run: npx turbo run build --filter=storefront
+        run: npx turbo run build --filter=@emc/storefront...
         env:
-          VITE_API_URL: ${{ vars.E2E_API_URL }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.E2E_API_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.E2E_SITE_URL }}
           NODE_ENV: production
 
       - name: Upload build for reuse across shards
         uses: actions/upload-artifact@v4
         with:
           name: e2e-build
-          path: apps/storefront/dist
+          path: |
+            apps/storefront/.next
+            apps/storefront/public
+          exclude: |
+            apps/storefront/.next/cache/**
           retention-days: 1
 
   # ============================================================
@@ -88,15 +93,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: e2e-build
-          path: apps/storefront/dist
+          path: apps/storefront
 
       - name: Install Playwright browsers (with system deps)
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Start app server
-        run: npx serve apps/storefront/dist -l 4173 &
-        env:
-          PORT: 4173
+        run: npx next start apps/storefront -p 4173 &
 
       - name: Wait for server to be ready
         run: npx wait-on http://localhost:4173 --timeout 60000
@@ -154,11 +157,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: e2e-build
-          path: apps/storefront/dist
+          path: apps/storefront
 
       - run: npx playwright install --with-deps chromium
 
-      - run: npx serve apps/storefront/dist -l 4173 &
+      - run: npx next start apps/storefront -p 4173 &
 
       - run: npx wait-on http://localhost:4173 --timeout 60000
 
@@ -205,11 +208,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: e2e-build
-          path: apps/storefront/dist
+          path: apps/storefront
 
       - run: npx playwright install --with-deps chromium
 
-      - run: npx serve apps/storefront/dist -l 4173 &
+      - run: npx next start apps/storefront -p 4173 &
 
       - run: npx wait-on http://localhost:4173 --timeout 60000
 
@@ -252,11 +255,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: e2e-build
-          path: apps/storefront/dist
+          path: apps/storefront
 
       - run: npx playwright install --with-deps chromium
 
-      - run: npx serve apps/storefront/dist -l 4173 &
+      - run: npx next start apps/storefront -p 4173 &
 
       - run: npx wait-on http://localhost:4173 --timeout 60000
 

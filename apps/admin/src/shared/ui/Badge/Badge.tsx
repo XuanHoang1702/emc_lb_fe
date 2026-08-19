@@ -6,12 +6,9 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  confirmed:
-    'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
-  pending:
-    'bg-amber-50 text-amber-700 border border-amber-200/60',
-  cancelled:
-    'bg-rose-50 text-rose-700 border border-rose-200/60',
+  confirmed: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+  pending: 'bg-amber-50 text-amber-700 border border-amber-200/60',
+  cancelled: 'bg-rose-50 text-rose-700 border border-rose-200/60',
 };
 
 export function Badge({ variant, children }: BadgeProps) {

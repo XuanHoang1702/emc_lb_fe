@@ -14,11 +14,32 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "clean": "turbo run clean && rimraf node_modules"
+    "seo:check": "node scripts/seo-check.mjs",
+    "clean": "turbo run clean && rimraf node_modules",
+    "prepare": "husky",
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
+      "eslint --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.62.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "prettier": "^3.5.0",
     "rimraf": "^6.0.0",
     "serve": "^14.2.6",

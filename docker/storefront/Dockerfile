@@ -1,5 +1,5 @@
 # ============================================================
-# Stage 1: Build Storefront Application
+# Stage 1: Build Storefront Application (Next.js)
 # ============================================================
 FROM node:20-alpine AS builder
 
@@ -18,28 +18,37 @@ RUN npm ci
 
 # Build storefront and its package dependencies
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx turbo run build --filter=@emc/storefront...
 
 # ============================================================
-# Stage 2: Production Nginx Runner
+# Stage 2: Production Node Runner (Next.js standalone)
+# SSR/SSG/ISR cần một Node server — không còn dùng nginx tĩnh.
 # ============================================================
-FROM nginx:1.27-alpine AS runner
+FROM node:20-alpine AS runner
 
-# Remove default nginx config
-RUN rm -rf /etc/nginx/conf.d/default.conf
+RUN apk add --no-cache libc6-compat
 
-# Copy custom nginx configuration
-COPY docker/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy build artifacts from builder stage
-COPY --from=builder /app/apps/storefront/dist /usr/share/nginx/html
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Copy standalone server + traced dependencies
+COPY --from=builder /app/apps/storefront/.next/standalone ./
+# Copy static assets (content-hashed bundles)
+COPY --from=builder /app/apps/storefront/.next/static ./apps/storefront/.next/static
+# Copy public assets (favicon, og-image, etc.)
+COPY --from=builder /app/apps/storefront/public ./apps/storefront/public
 
 # Expose HTTP port
-EXPOSE 80
+EXPOSE 3000
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget -q --spider http://127.0.0.1:80/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -q --spider http://127.0.0.1:3000/health || exit 1
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start Next.js standalone server
+CMD ["node", "apps/storefront/server.js"]

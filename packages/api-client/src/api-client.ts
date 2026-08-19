@@ -1,5 +1,4 @@
-import axios from 'axios';
-import type { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 
 export interface ApiClientConfig {
   baseURL: string;
@@ -20,8 +19,7 @@ function createApiClient(config: ApiClientConfig): AxiosInstance {
   // Request interceptor - attach auth token
   instance.interceptors.request.use(
     (requestConfig) => {
-      const token =
-        typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (token && requestConfig.headers) {
         requestConfig.headers.Authorization = `Bearer ${token}`;
       }

@@ -1,5 +1,4 @@
-import type { StatItem } from '@/widgets/stat-cards';
-import { StatCards } from '@/widgets/stat-cards';
+import { StatCards, type StatItem } from '@/widgets/stat-cards';
 import { RevenueChart } from '@/widgets/revenue-chart';
 import { TopProducts } from '@/widgets/top-products';
 import { OrdersByDay } from '@/widgets/orders-by-day';
@@ -170,10 +169,7 @@ export function DashboardPage() {
       {/* Row 2: Revenue Chart (66.7%) + Popular Routes (33.3%) */}
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         <div className="lg:col-span-8 flex flex-col h-full">
-          <RevenueChart
-            data={revenueData.data}
-            series={revenueData.series}
-          />
+          <RevenueChart data={revenueData.data} series={revenueData.series} />
         </div>
         <div className="lg:col-span-4 flex flex-col h-full">
           <TopProducts items={popularRoutes} />
@@ -186,10 +182,7 @@ export function DashboardPage() {
           <OrdersByDay data={weekdayOrders} />
         </div>
         <div className="lg:col-span-4 flex flex-col h-full">
-          <SalesByCategory
-            data={salesByMode.data}
-            total={salesByMode.total}
-          />
+          <SalesByCategory data={salesByMode.data} total={salesByMode.total} />
         </div>
       </div>
 
