@@ -5,6 +5,9 @@ module.exports = {
       numberOfRuns: 3,
       startServerCommand: 'npx next start apps/storefront -p 3000',
       startServerReadyPattern: 'Ready',
+      // Ubuntu 24.04 runner (unprivileged userns bị AppArmor chặn) → Chrome crash
+      // "No usable sandbox!". Bắt buộc --no-sandbox trên CI.
+      chromeFlags: '--no-sandbox --disable-dev-shm-usage',
     },
     assert: {
       assertions: {

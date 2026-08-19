@@ -25,6 +25,8 @@ export default defineConfig({
     trace: 'retain-on-failure', // giữ trace khi fail để debug, xoá khi pass để tiết kiệm dung lượng
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Ubuntu 24.04 runner chặn unprivileged userns → chromium crash "No usable sandbox!"
+    chromiumSandbox: process.env.CI ? false : undefined,
     // Test chậm hơn 1s coi là cảnh báo hiệu năng
     actionTimeout: 10_000,
     navigationTimeout: 15_000,
