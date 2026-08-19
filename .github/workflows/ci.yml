@@ -210,15 +210,14 @@ jobs:
           # Storefront build ra .next (Next.js), admin build ra dist (Vite)
           # Upload nhiều path để LCA = apps/storefront, artifact giữ cấu trúc .next/ và public/
           # (giống e2e.yml) — nếu upload 1 path, .next bị flatten và next start không tìm thấy build
+          # Loại trừ .next/cache bằng negation pattern "!" trong path (input exclude không tồn tại ở v4 này)
           - app: storefront
             artifact_path: |
               apps/storefront/.next
               apps/storefront/public
-            artifact_exclude: |
-              apps/storefront/.next/cache/**
+              !apps/storefront/.next/cache/**
           - app: admin
             artifact_path: apps/admin/dist
-            artifact_exclude: ''
     steps:
       - uses: actions/checkout@v4
 
@@ -245,8 +244,9 @@ jobs:
         with:
           name: build-${{ matrix.app }}
           path: ${{ matrix.artifact_path }}
-          exclude: ${{ matrix.artifact_exclude }}
           if-no-files-found: error
+          # Bắt buộc: .next là thư mục hidden, v4.4+ loại trừ hidden files theo mặc định
+          include-hidden-files: true
           retention-days: 3
 
   # ============================================================

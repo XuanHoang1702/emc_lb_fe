@@ -58,8 +58,10 @@ jobs:
           path: |
             apps/storefront/.next
             apps/storefront/public
-          exclude: |
-            apps/storefront/.next/cache/**
+            !apps/storefront/.next/cache/**
+          if-no-files-found: error
+          # Bắt buộc: .next là thư mục hidden, v4.4+ loại trừ hidden files theo mặc định
+          include-hidden-files: true
           retention-days: 1
 
   # ============================================================
