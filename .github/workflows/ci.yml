@@ -246,6 +246,7 @@ jobs:
           name: build-${{ matrix.app }}
           path: ${{ matrix.artifact_path }}
           exclude: ${{ matrix.artifact_exclude }}
+          if-no-files-found: error
           retention-days: 3
 
   # ============================================================
@@ -371,6 +372,11 @@ jobs:
         with:
           name: build-storefront
           path: apps/storefront
+          # Ép dùng GitHub REST API (actions/artifact internal path không tìm thấy
+          # artifact upload từ matrix job khác). Cần actions: read (đã cấp ở trên).
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - name: Start storefront server
         run: npx next start apps/storefront -p 3000 &
@@ -417,6 +423,9 @@ jobs:
         with:
           name: build-storefront
           path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - name: Install Chromium for Lighthouse
         run: npx playwright install --with-deps chromium

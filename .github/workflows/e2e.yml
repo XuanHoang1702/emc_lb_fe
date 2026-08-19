@@ -95,6 +95,9 @@ jobs:
         with:
           name: e2e-build
           path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - name: Install Playwright browsers (with system deps)
         run: npx playwright install --with-deps ${{ matrix.browser }}
@@ -159,6 +162,9 @@ jobs:
         with:
           name: e2e-build
           path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - run: npx playwright install --with-deps chromium
 
@@ -210,6 +216,9 @@ jobs:
         with:
           name: e2e-build
           path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - run: npx playwright install --with-deps chromium
 
@@ -257,6 +266,9 @@ jobs:
         with:
           name: e2e-build
           path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - run: npx playwright install --with-deps chromium
 
