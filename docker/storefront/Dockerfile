@@ -8,13 +8,25 @@ WORKDIR /app
 # Install build dependencies if needed
 RUN apk add --no-cache libc6-compat
 
-# Copy workspace package manifests
+# Copy workspace manifests ONLY first → `npm ci` layer stays cached across
+# source changes (gha cache). Invalued only khi lockfile/manifest đổi.
+# (Docker COPY glob không giữ cấu trúc thư mục → phải khai báo từng manifest.)
 COPY package.json package-lock.json turbo.json tsconfig.base.json ./
-COPY packages/ ./packages/
-COPY apps/storefront/ ./apps/storefront/
+COPY apps/storefront/package.json ./apps/storefront/package.json
+COPY apps/admin/package.json ./apps/admin/package.json
+COPY packages/config/package.json ./packages/config/package.json
+COPY packages/contracts/package.json ./packages/contracts/package.json
+COPY packages/api-client/package.json ./packages/api-client/package.json
+COPY packages/ui/package.json ./packages/ui/package.json
+COPY packages/utils/package.json ./packages/utils/package.json
 
-# Install dependencies (frozen lockfile)
+# Install dependencies (frozen lockfile) — layer cached via type=gha
 RUN npm ci
+
+# Copy source AFTER install → chỉ layer build bị invalidate khi source đổi,
+# không kéo theo việc cài lại toàn bộ dependencies.
+COPY apps/storefront/ ./apps/storefront/
+COPY packages/ ./packages/
 
 # Build storefront and its package dependencies
 ENV NODE_ENV=production

@@ -22,6 +22,9 @@
     "format:check": {
       "cache": false
     },
+    "depgraph": {
+      "cache": false
+    },
     "clean": {
       "cache": false
     }

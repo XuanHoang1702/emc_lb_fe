@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint src/ --ext .ts,.tsx",
+    "depgraph": "depcruise src --config ../../dependency-cruiser.config.cjs --ts-config tsconfig.json",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rimraf dist"

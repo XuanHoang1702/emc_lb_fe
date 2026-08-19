@@ -6,6 +6,7 @@
  */
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { requireRoute } from './helpers/route-guard';
 
 test.describe('@a11y Accessibility Audit', () => {
   test('@a11y homepage should have no critical a11y violations', async ({ page }) => {
@@ -29,7 +30,7 @@ test.describe('@a11y Accessibility Audit', () => {
   });
 
   test('@a11y login page should have no critical a11y violations', async ({ page }) => {
-    await page.goto('/login');
+    await requireRoute(page, '/login');
     await page.waitForLoadState('networkidle');
 
     const results = await new AxeBuilder({ page })

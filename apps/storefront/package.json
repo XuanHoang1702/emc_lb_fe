@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src/ --ext .ts,.tsx",
+    "depgraph": "depcruise src --config ../../dependency-cruiser.config.cjs --ts-config tsconfig.json",
     "type-check": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "clean": "rimraf .next out dist"

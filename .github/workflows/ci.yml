@@ -221,6 +221,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Bảo vệ matrix: nếu thêm app mới (vd: seller-portal) mà quên khai báo
+      # trong build/docker-build, CI phải fail chứ không im lặng bỏ qua.
+      - name: Verify all apps are covered by the build matrix
+        run: |
+          MATRIX_APPS="storefront admin"
+          MISSING=""
+          for app_dir in apps/*/; do
+            name=$(basename "$app_dir")
+            case " $MATRIX_APPS " in
+              *" $name "*) ;;
+              *) MISSING="$MISSING $name" ;;
+            esac
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::App mới chưa khai báo trong matrix build/docker-build:${MISSING}. Thêm vào ci.yml (build + docker-build + all-checks-passed) trước khi merge."
+            exit 1
+          fi
+          echo "Mọi app trong apps/ đều có trong matrix build."
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -418,7 +437,26 @@ jobs:
 
       - run: npm ci
 
+      - name: Check for storefront/asset changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'apps/storefront/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'turbo.json'
+              - 'tsconfig.base.json'
+              - 'lighthouserc.js'
+
+      - name: No frontend changes — skip Lighthouse
+        if: steps.changes.outputs.frontend == 'false'
+        run: echo "Không có thay đổi liên quan route/asset — bỏ qua Lighthouse."
+
       - name: Download storefront build
+        if: steps.changes.outputs.frontend == 'true'
         uses: actions/download-artifact@v4
         with:
           name: build-storefront
@@ -428,23 +466,40 @@ jobs:
           run-id: ${{ github.run_id }}
 
       - name: Install Chromium for Lighthouse
+        if: steps.changes.outputs.frontend == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Resolve Chromium path
+        if: steps.changes.outputs.frontend == 'true'
         id: chrome-path
         run: |
           CHROME=$(find ~/.cache/ms-playwright -type f -name chrome -path '*chromium*' | head -1)
           echo "path=${CHROME}" >> "$GITHUB_OUTPUT"
 
-      - name: Run Lighthouse CI
-        run: npx lhci autorun --config=./lighthouserc.js
+      # Lighthouse 6-7 phút/lần. Chỉ chạy full 3 runs trên PR vào main và push main;
+      # PR/push vào develop chạy bản rút gọn 1 run để vẫn bắt regression nhanh.
+      - name: Determine Lighthouse run count
+        id: runs
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "count=3" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.base_ref }}" = "main" ]; then
+            echo "count=3" >> "$GITHUB_OUTPUT"
+          else
+            echo "count=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run Lighthouse CI (${{ steps.runs.outputs.count }} run(s))
+        if: steps.changes.outputs.frontend == 'true'
+        run: npx lhci autorun --config=./lighthouserc.js --collect.numberOfRuns=${{ steps.runs.outputs.count }}
         env:
           # Dùng Chromium của Playwright (đã cài cùng system deps) để tránh
           # phụ thuộc vào Chrome download riêng của puppeteer
           CHROME_PATH: ${{ steps.chrome-path.outputs.path }}
 
       - name: Upload Lighthouse report
-        if: always()
+        if: always() && steps.changes.outputs.frontend == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-report
@@ -452,27 +507,180 @@ jobs:
           retention-days: 14
 
   # ============================================================
-  # JOB 9: Gatekeeper — job tổng hợp, dùng làm "required status check" duy nhất
+  # JOB 9: Architecture & Import-Rule Validation
+  # Chặn vi phạm FSD (layer direction, slice isolation, cross-app import)
+  # bằng dependency-cruiser — đúng checklist "Is the architectural rule
+  # enforced automatically in CI?" (architecture doc §7, "Architecture Checklist").
+  # ============================================================
+  architecture:
+    name: Architecture (FSD Import Rules)
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: turbo-
+
+      # dependency-cruiser đọc dependency-cruiser.config.cjs ở root;
+      # fail với exit code != 0 nếu vi phạm layer/slice/app boundary
+      - name: Validate dependency graph (FSD)
+        run: npx turbo run depgraph
+
+  # ============================================================
+  # JOB 10: Bundle-size monitoring
+  # Chặn main JS bundle phình to bất thường khi thêm dependency vào
+  # packages/ui, packages/utils hay các app (performance budget §17).
+  # ============================================================
+  bundle-size:
+    name: Bundle Size Check
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download storefront build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-storefront
+          path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+
+      - name: Download admin build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-admin
+          path: apps/admin
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+
+      - name: Run bundle size assertions
+        run: node scripts/bundle-size-check.mjs
+
+  # ============================================================
+  # JOB 9: Critical Path E2E — checkout & payment PHẢI pass trên mọi PR/push
+  # Architecture doc §7 & §12: payment/checkout là vùng rủi ro cao, cần CI gate
+  # nghiêm ngặt hơn. Không retry — flaky dù 1 lần là fail để điều tra ngay.
+  # Full multi-browser E2E (e2e.yml) vẫn chạy riêng trên main.
+  # ============================================================
+  e2e-critical:
+    name: Critical Path E2E (Checkout & Payment)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download storefront build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-storefront
+          path: apps/storefront
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Start storefront server
+        run: npx next start apps/storefront -p 4173 &
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:4173 --timeout 60000
+
+      # Không retry: checkout/payment flaky = fail ngay, không che giấu bug.
+      # --forbid-only: cấm test.only() sót lại trong code.
+      - name: Run checkout & payment E2E (no retries allowed)
+        run: >
+          npx playwright test
+          --project=chromium
+          --grep="@critical"
+          --forbid-only
+          --retries=0
+          --workers=1
+          --reporter=github
+        env:
+          BASE_URL: http://localhost:4173
+          CI: true
+          PAYMENT_GATEWAY_MODE: sandbox
+
+      - name: Upload critical path report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-critical-path-report
+          path: test-results/
+          retention-days: 14
+
+  # ============================================================
+  # JOB 10: Gatekeeper — job tổng hợp, dùng làm "required status check" duy nhất
   # Branch protection chỉ cần trỏ vào job này
-  # E2E chạy riêng trong workflow e2e.yml — không nằm trong CI để không chặn merge
+  # Full multi-browser E2E chạy riêng trong workflow e2e.yml (main PRs + nightly)
   # ============================================================
   all-checks-passed:
     name: All Checks Passed
     if: always()
-    needs: [lint, typecheck, test, build, security-audit, docker-build, seo-check, lighthouse]
+    needs:
+      [
+        lint,
+        typecheck,
+        test,
+        build,
+        security-audit,
+        docker-build,
+        seo-check,
+        lighthouse,
+        architecture,
+        bundle-size,
+        e2e-critical,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all jobs succeeded
         run: |
           echo "=== Job Results ==="
-          echo "lint:           ${{ needs.lint.result }}"
-          echo "typecheck:      ${{ needs.typecheck.result }}"
-          echo "test:           ${{ needs.test.result }}"
-          echo "build:          ${{ needs.build.result }}"
-          echo "security-audit: ${{ needs.security-audit.result }}"
-          echo "docker-build:   ${{ needs.docker-build.result }}"
-          echo "seo-check:      ${{ needs.seo-check.result }}"
-          echo "lighthouse:     ${{ needs.lighthouse.result }}"
+          echo "lint:             ${{ needs.lint.result }}"
+          echo "typecheck:        ${{ needs.typecheck.result }}"
+          echo "test:             ${{ needs.test.result }}"
+          echo "build:            ${{ needs.build.result }}"
+          echo "security-audit:   ${{ needs.security-audit.result }}"
+          echo "docker-build:     ${{ needs.docker-build.result }}"
+          echo "seo-check:        ${{ needs.seo-check.result }}"
+          echo "lighthouse:       ${{ needs.lighthouse.result }}"
+          echo "architecture:     ${{ needs.architecture.result }}"
+          echo "bundle-size:      ${{ needs.bundle-size.result }}"
+          echo "e2e-critical:     ${{ needs.e2e-critical.result }}"
           echo "==================="
 
           if [ "${{ contains(needs.*.result, 'failure') }}" == "true" ] || \
