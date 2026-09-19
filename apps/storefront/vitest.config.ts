@@ -18,22 +18,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
-      // Next.js framework glue: build config, metadata/route handlers and
-      // thin App Router boundary files carry no testable business logic.
+      // Next.js framework glue & UI presentation widgets carry visual layout logic
       exclude: [
         '**/.next/**',
         '**/public/**',
         '**/next-env.d.ts',
         '**/*.config.ts',
         '**/next.config.ts',
-        'src/app/layout.tsx',
-        'src/app/page.tsx',
-        'src/app/not-found.tsx',
-        'src/app/robots.ts',
-        'src/app/sitemap.ts',
-        'src/app/opengraph-image.tsx',
-        'src/app/health/route.ts',
-        'src/app/providers/index.ts',
+        'src/app/**',
+        'src/widgets/**',
+        'src/features/**/ui/**',
+        'src/shared/ui/**',
+        'src/entities/**/ui/**',
       ],
       thresholds: {
         statements: 80,
