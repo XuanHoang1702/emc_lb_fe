@@ -79,15 +79,21 @@ module.exports = {
       name: 'fsd-features-cross-import',
       comment: 'A feature must not import another feature. Extract shared logic to entities/shared',
       severity: 'error',
-      from: { path: '(^|/)src/features/' },
-      to: { path: '(^|/)src/features/' },
+      from: { path: '^src/features/([^/]+)' },
+      to: {
+        path: '^src/features/([^/]+)',
+        pathNot: '^src/features/$1',
+      },
     },
     {
       name: 'fsd-entities-cross-import',
       comment: 'An entity must not import another entity',
       severity: 'error',
-      from: { path: '(^|/)src/entities/' },
-      to: { path: '(^|/)src/entities/' },
+      from: { path: '^src/entities/([^/]+)' },
+      to: {
+        path: '^src/entities/([^/]+)',
+        pathNot: '^src/entities/$1',
+      },
     },
 
     // ============================================================

@@ -205,7 +205,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        app: [storefront, admin]
+        app: [storefront] # admin đã tạm ẩn/bỏ
         include:
           # Storefront build ra .next (Next.js), admin build ra dist (Vite)
           # Upload nhiều path để LCA = apps/storefront, artifact giữ cấu trúc .next/ và public/
@@ -216,8 +216,8 @@ jobs:
               apps/storefront/.next
               apps/storefront/public
               !apps/storefront/.next/cache/**
-          - app: admin
-            artifact_path: apps/admin/dist
+          # - app: admin
+          #   artifact_path: apps/admin/dist
     steps:
       - uses: actions/checkout@v4
 
@@ -225,7 +225,7 @@ jobs:
       # trong build/docker-build, CI phải fail chứ không im lặng bỏ qua.
       - name: Verify all apps are covered by the build matrix
         run: |
-          MATRIX_APPS="storefront admin"
+          MATRIX_APPS="storefront"
           MISSING=""
           for app_dir in apps/*/; do
             name=$(basename "$app_dir")
@@ -311,7 +311,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        app: [storefront, admin]
+        app: [storefront] # admin đã tạm ẩn/bỏ
     steps:
       - uses: actions/checkout@v4
 
@@ -568,14 +568,14 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
 
-      - name: Download admin build
-        uses: actions/download-artifact@v4
-        with:
-          name: build-admin
-          path: apps/admin
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.run_id }}
+      # - name: Download admin build
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: build-admin
+      #     path: apps/admin
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     repository: ${{ github.repository }}
+      #     run-id: ${{ github.run_id }}
 
       - name: Run bundle size assertions
         run: node scripts/bundle-size-check.mjs
