@@ -9,7 +9,7 @@ module.exports = {
       comment: 'Apps in a monorepo must never import another app. Shared code belongs in packages/',
       severity: 'error',
       from: {},
-      to: { path: '@emc/(storefront|admin|seller-portal)(/|$)' },
+      to: { path: '@emc/(storefront|seller-portal)(/|$)' },
     },
     {
       name: 'no-cross-app-path',

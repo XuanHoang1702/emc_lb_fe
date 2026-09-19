@@ -13,7 +13,6 @@ RUN apk add --no-cache libc6-compat
 # (Docker COPY glob không giữ cấu trúc thư mục → phải khai báo từng manifest.)
 COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY apps/storefront/package.json ./apps/storefront/package.json
-COPY apps/admin/package.json ./apps/admin/package.json
 COPY packages/config/package.json ./packages/config/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/api-client/package.json ./packages/api-client/package.json

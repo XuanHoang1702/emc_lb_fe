@@ -6,7 +6,6 @@ Monorepo chứa các ứng dụng frontend cho hệ thống thương mại đi�
 
 - **Framework:** React 19 + TypeScript
 - **Storefront:** Next.js 16 (App Router, SEO-ready: metadata, sitemap, robots, JSON-LD, OG image)
-- **Admin:** Vite
 - **Styling:** Tailwind CSS 4
 - **Monorepo:** Turborepo
 - **State Management:** TanStack Query (server) + Zustand (client)
@@ -18,8 +17,7 @@ Monorepo chứa các ứng dụng frontend cho hệ thống thương mại đi�
 
 ```
 apps/
-├── storefront/     → App khách hàng (port 3000)
-└── admin/          → Admin dashboard (port 3001)
+└── storefront/     → App khách hàng (port 3000)
 
 packages/
 ├── ui/             → Design system chung
@@ -40,9 +38,6 @@ npm run dev
 
 # Chạy riêng storefront
 npx turbo dev --filter=@emc/storefront
-
-# Chạy riêng admin
-npx turbo dev --filter=@emc/admin
 
 # Build
 npm run build

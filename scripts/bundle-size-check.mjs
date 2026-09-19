@@ -27,10 +27,6 @@ const BUDGETS = {
     totalKB: Number(process.env.STOREFRONT_TOTAL_BUDGET_KB ?? 1500), // raw bytes; ~gzip/3
     maxChunkKB: Number(process.env.STOREFRONT_MAX_CHUNK_KB ?? 500),
   },
-  admin: {
-    totalKB: Number(process.env.ADMIN_TOTAL_BUDGET_KB ?? 800),
-    maxChunkKB: Number(process.env.ADMIN_MAX_CHUNK_KB ?? 800),
-  },
 };
 
 // Growth vs baseline: > GROWTH_WARN% → warning, > GROWTH_ERROR% → fail
@@ -65,18 +61,17 @@ function scanJs(dir) {
 const updateBaseline = process.argv.includes('--update');
 
 const storefront = scanJs(join(ROOT, 'apps', 'storefront', '.next', 'static', 'chunks'));
-const admin = scanJs(join(ROOT, 'apps', 'admin', 'dist', 'assets'));
 
-const current = { storefront: storefront.totalKB, admin: admin.totalKB };
+const current = { storefront: storefront.totalKB };
 const baseline = existsSync(BASELINE_FILE) ? JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) : null;
 
 let failed = false;
 const report = [];
 
-for (const app of ['storefront', 'admin']) {
+for (const app of ['storefront']) {
   const { totalKB, maxChunkKB } = BUDGETS[app];
-  const totals = app === 'storefront' ? storefront.totalKB : admin.totalKB;
-  const max = app === 'storefront' ? storefront.maxKB : admin.maxKB;
+  const totals = storefront.totalKB;
+  const max = storefront.maxKB;
 
   const overTotal = totals > totalKB;
   const overMax = max > maxChunkKB;

@@ -9,6 +9,7 @@
     "./*.css": "./src/*.css"
   },
   "scripts": {
+    "test": "vitest run",
     "lint": "eslint src/ --ext .ts,.tsx",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist"

@@ -43,10 +43,11 @@ export function Button({
     `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`.trim();
 
   return (
-    <button className={classes} disabled={disabled || isLoading} {...props}>
+    <button className={classes} disabled={disabled || isLoading} aria-busy={isLoading} {...props}>
       {isLoading ? (
         <span className="flex items-center gap-2">
           <svg
+            aria-hidden="true"
             className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"

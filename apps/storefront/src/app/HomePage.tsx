@@ -1,18 +1,20 @@
+import Link from 'next/link';
+
 export function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100">
       <header className="w-full bg-white/80 backdrop-blur-sm border-b border-blue-100">
         <nav className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <a href="/" className="text-xl font-bold text-blue-700 tracking-tight">
+          <Link href="/" className="text-xl font-bold text-blue-700 tracking-tight">
             EMC
-          </a>
+          </Link>
           <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
-            <a href="/products" className="hover:text-blue-700 transition-colors">
+            <Link href="/products" className="hover:text-blue-700 transition-colors">
               Sản phẩm
-            </a>
-            <a href="/cart" className="hover:text-blue-700 transition-colors">
+            </Link>
+            <Link href="/cart" className="hover:text-blue-700 transition-colors">
               Giỏ hàng
-            </a>
+            </Link>
           </div>
         </nav>
       </header>

@@ -1,7 +1,7 @@
 # Frontend Architecture for a Large-Scale E-Commerce System
 
 **Technology Stack:** React + TypeScript + Tailwind CSS
-**Rendering:** Storefront runs on Next.js (App Router) — SEO-first with SSR/SSG; Admin runs on Vite as an SPA
+**Rendering:** Storefront runs on Next.js (App Router) — SEO-first with SSR/SSG
 **Architecture:** Feature-Sliced Design (FSD) within a Monorepo managed by Turborepo or Nx
 
 ---
@@ -71,7 +71,6 @@ Use a monorepo when multiple applications need to share code, tooling, API contr
 ```
 apps/
 ├── storefront/              # Customer-facing application
-├── admin/                   # Administration dashboard
 └── seller-portal/           # Seller portal, if the platform supports a marketplace
 
 packages/
