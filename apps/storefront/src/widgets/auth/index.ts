@@ -1,0 +1,1 @@
+export { RegisterShowcaseCard } from './RegisterShowcaseCard';

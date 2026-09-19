@@ -63,8 +63,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang={siteConfig.defaultLanguage} className={inter.variable}>
-      <body>
+    <html lang={siteConfig.defaultLanguage} className={inter.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
         <script
           type="application/ld+json"
