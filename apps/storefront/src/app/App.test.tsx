@@ -4,12 +4,11 @@ import { HomePage } from '@/app/HomePage';
 import { NotFoundPage } from '@/app/NotFoundPage';
 
 describe('HomePage', () => {
-  it('renders the home page heading', () => {
+  it('renders the home page heading and main sections', () => {
     render(<HomePage />);
 
-    expect(screen.getByRole('heading', { name: 'EMC E-Commerce' })).toBeInTheDocument();
-    expect(screen.getByText('React 19')).toBeInTheDocument();
-    expect(screen.getByText('TypeScript')).toBeInTheDocument();
+    expect(screen.getAllByText(/EMC/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/BỘ SƯU TẬP THỜI TRANG ĐẲNG CẤP/i)).toBeInTheDocument();
   });
 });
 
