@@ -160,9 +160,9 @@ export function Masonry({
                       </span>
                     )}
                     {item.title && (
-                      <h3 className="text-base font-bold tracking-tight line-clamp-1">
+                      <span className="text-base font-bold tracking-tight line-clamp-1 block">
                         {item.title}
-                      </h3>
+                      </span>
                     )}
                     {item.sublabel && (
                       <p className="text-xs text-slate-200 mt-1 line-clamp-2">{item.sublabel}</p>

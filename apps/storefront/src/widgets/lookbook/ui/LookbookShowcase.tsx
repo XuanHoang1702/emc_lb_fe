@@ -116,21 +116,23 @@ export function LookbookShowcase() {
             {/* View Mode Toggle */}
             <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button
+                type="button"
                 onClick={() => setViewMode('masonry')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   viewMode === 'masonry'
                     ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" /> Masonry
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('accordion')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   viewMode === 'accordion'
                     ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-900'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Rows className="w-3.5 h-3.5" /> Accordion

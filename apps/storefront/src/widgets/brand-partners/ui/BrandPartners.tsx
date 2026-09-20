@@ -22,9 +22,9 @@ export function BrandPartners() {
           <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200/80 uppercase tracking-wider">
             <Award className="w-3.5 h-3.5" /> Thương Hiệu Thời Trang & Trang Sức Đỉnh Cao
           </span>
-          <h3 className="text-xl font-extrabold text-slate-800">
+          <h2 className="text-xl font-extrabold text-slate-800">
             Đối Tác Phân Phối Chính Hãng Từ Các Nhà Mốt Hàng Đầu
-          </h3>
+          </h2>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
@@ -36,7 +36,7 @@ export function BrandPartners() {
               <div className="text-base font-black text-slate-800 group-hover:text-amber-600 transition-colors">
                 {brand.name}
               </div>
-              <div className="text-[10px] text-slate-400 font-semibold truncate">{brand.tag}</div>
+              <div className="text-[10px] text-slate-500 font-semibold truncate">{brand.tag}</div>
             </div>
           ))}
         </div>

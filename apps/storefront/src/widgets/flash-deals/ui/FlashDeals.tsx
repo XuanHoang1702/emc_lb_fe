@@ -84,7 +84,7 @@ export function FlashDeals() {
                       <Flame className="w-3.5 h-3.5 fill-current text-slate-600" /> Đã bán{' '}
                       {product.soldCount}
                     </span>
-                    <span className="text-slate-400">
+                    <span className="text-slate-600 font-semibold">
                       Còn {(product.totalStock ?? 100) - (product.soldCount ?? 0)} suất
                     </span>
                   </div>

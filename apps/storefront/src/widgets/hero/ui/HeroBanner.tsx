@@ -118,9 +118,10 @@ export function HeroBanner() {
                   <button
                     key={idx}
                     type="button"
+                    aria-label={`Chuyển sang slide ${idx + 1}`}
                     onClick={() => setCurrentSlide(idx)}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      idx === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/30 hover:bg-white/60'
+                    className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                      idx === currentSlide ? 'w-8 bg-white' : 'w-2.5 bg-white/40 hover:bg-white/70'
                     }`}
                   />
                 ))}
@@ -140,7 +141,7 @@ export function HeroBanner() {
                 <span className="text-2xl sm:text-3xl font-extrabold text-white">
                   {slide.price}
                 </span>
-                <span className="text-sm text-slate-400 line-through">{slide.originalPrice}</span>
+                <span className="text-sm text-slate-300 line-through">{slide.originalPrice}</span>
               </div>
             </div>
 
@@ -165,6 +166,7 @@ export function HeroBanner() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  aria-label="Slide trước"
                   onClick={() =>
                     setCurrentSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)
                   }
@@ -174,6 +176,7 @@ export function HeroBanner() {
                 </button>
                 <button
                   type="button"
+                  aria-label="Slide tiếp theo"
                   onClick={() => setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length)}
                   className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md border border-white/15 transition-all cursor-pointer"
                 >
@@ -191,9 +194,9 @@ export function HeroBanner() {
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                   <Gift className="w-3.5 h-3.5 text-slate-600" /> Quà Tặng Thời Trang
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                   Tặng Voucher 500.000đ Cho Đơn Hàng Đầu Tiên
-                </h3>
+                </h2>
                 <p className="text-xs text-slate-500">
                   Đăng ký tài khoản ngay hôm nay để trải nghiệm thời trang & trang sức đẳng cấp.
                 </p>
@@ -213,9 +216,9 @@ export function HeroBanner() {
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                   <Sparkles className="w-3.5 h-3.5 text-slate-600" /> Thử Đồ Tại Nhà 2H
                 </span>
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                   Giao Hàng & Thử Trực Tiếp Tận Nhà Miễn Phí
-                </h3>
+                </h2>
                 <p className="text-xs text-slate-500">
                   Hỗ trợ 1 đổi 1 trong 30 ngày nếu không vừa size hoặc không ưng ý.
                 </p>

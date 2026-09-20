@@ -27,9 +27,9 @@ export function Footer() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-slate-200 border border-white/20">
               <Sparkles className="w-3.5 h-3.5 text-slate-300" /> Nhận Voucher 500.000đ
             </span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Đăng Ký Nhận Tin Ưu Đãi Độc Quyền
-            </h3>
+            </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
               Nhận thông báo mã giảm giá hot, sự kiện Flash Sale và bộ sưu tập mới nhất hàng tuần.
             </p>
@@ -48,6 +48,7 @@ export function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Nhập địa chỉ Email của bạn..."
+                  aria-label="Nhập địa chỉ Email của bạn"
                   className="w-full pl-11 pr-28 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder:text-slate-500 focus:border-slate-600 outline-none transition-all"
                   required
                 />
@@ -103,9 +104,9 @@ export function Footer() {
 
           {/* Col 2: About EMC */}
           <div className="space-y-3">
-            <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">
+            <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
               Về EMC Store
-            </h4>
+            </h3>
             <ul className="space-y-2.5 text-slate-400">
               <li>
                 <Link href="#" className="hover:text-teal-300 transition-colors">
@@ -137,9 +138,9 @@ export function Footer() {
 
           {/* Col 3: Customer Care */}
           <div className="space-y-3">
-            <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">
+            <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
               Hỗ Trợ Khách Hàng
-            </h4>
+            </h3>
             <ul className="space-y-2.5 text-slate-400">
               <li>
                 <Link href="#" className="hover:text-teal-300 transition-colors">
@@ -171,9 +172,9 @@ export function Footer() {
 
           {/* Col 4: Payments & Security */}
           <div className="space-y-3">
-            <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">
+            <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
               Thanh Toán & Bảo Mật
-            </h4>
+            </h3>
             <div className="flex flex-wrap gap-2 text-[10px] text-slate-300">
               <span className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg font-bold">
                 Visa
@@ -204,20 +205,20 @@ export function Footer() {
         </div>
 
         {/* 3. Bottom Copyright Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-4">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-4">
           <p>
             © 2026 EMC E-Commerce System. Tất cả quyền được bảo lưu. Phát triển trên nền tảng
             Next.js & FSD Architecture.
           </p>
 
           <div className="flex items-center gap-6">
-            <Link href="#" className="hover:text-slate-300 transition-colors">
+            <Link href="#" className="hover:text-white transition-colors">
               Điều khoản dịch vụ
             </Link>
-            <Link href="#" className="hover:text-slate-300 transition-colors">
+            <Link href="#" className="hover:text-white transition-colors">
               Chính sách bảo mật
             </Link>
-            <Link href="#" className="hover:text-slate-300 transition-colors">
+            <Link href="#" className="hover:text-white transition-colors">
               Sitemap
             </Link>
           </div>

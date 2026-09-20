@@ -60,7 +60,7 @@ export function Header() {
             <span className="text-xl font-black tracking-tight text-slate-900 leading-none">
               EMC <span className="text-teal-600">Store</span>
             </span>
-            <span className="text-[9px] font-semibold text-slate-400 tracking-widest uppercase">
+            <span className="text-[9px] font-semibold text-slate-500 tracking-widest uppercase">
               E-Commerce
             </span>
           </div>
@@ -74,6 +74,7 @@ export function Header() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm Áo Vest Nam, Đầm Lụa Nữ, Mặt Dây Chuyền Kim Cương, Túi Da..."
+              aria-label="Tìm kiếm sản phẩm"
               className="w-full pl-11 pr-24 py-2.5 bg-slate-100/90 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
             />
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -91,6 +92,7 @@ export function Header() {
           {/* Wishlist */}
           <Link
             href="/wishlist"
+            aria-label="Danh sách yêu thích"
             className="p-2 sm:px-3 sm:py-2 rounded-xl text-slate-600 hover:text-teal-600 hover:bg-teal-50 flex items-center gap-1.5 transition-all cursor-pointer relative"
           >
             <Heart className="w-5 h-5" />
@@ -100,6 +102,7 @@ export function Header() {
           {/* Cart Badge */}
           <Link
             href="/cart"
+            aria-label="Giỏ hàng"
             className="p-2 sm:px-3 sm:py-2 rounded-xl text-slate-600 hover:text-teal-600 hover:bg-teal-50 flex items-center gap-1.5 transition-all cursor-pointer relative"
           >
             <div className="relative">
@@ -132,6 +135,7 @@ export function Header() {
           {/* Mobile Menu Toggle Button */}
           <button
             type="button"
+            aria-label="Menu"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 md:hidden cursor-pointer"
           >
@@ -216,6 +220,7 @@ export function Header() {
             <input
               type="text"
               placeholder="Tìm kiếm sản phẩm..."
+              aria-label="Tìm kiếm sản phẩm"
               className="w-full pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-xs text-slate-900 outline-none"
             />
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

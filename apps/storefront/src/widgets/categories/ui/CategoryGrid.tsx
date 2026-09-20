@@ -13,7 +13,7 @@ export function CategoryGrid() {
         {/* Header */}
         <div className="flex items-center justify-between pb-8 border-b border-slate-100">
           <div>
-            <span className="text-xs font-bold text-teal-600 uppercase tracking-wider block mb-1">
+            <span className="text-xs font-bold text-teal-700 uppercase tracking-wider block mb-1">
               Khám Phá Theo Danh Mục
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
@@ -23,7 +23,7 @@ export function CategoryGrid() {
 
           <Link
             href="/categories"
-            className="text-xs sm:text-sm font-bold text-teal-600 hover:text-teal-700 hover:underline flex items-center gap-1 transition-colors"
+            className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 hover:underline flex items-center gap-1 transition-colors"
           >
             Tất cả danh mục <ArrowRight className="w-4 h-4" />
           </Link>
@@ -49,10 +49,10 @@ export function CategoryGrid() {
               </div>
 
               <div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-teal-600 transition-colors line-clamp-1">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-teal-700 transition-colors line-clamp-1">
                   {category.name}
                 </h3>
-                <span className="text-[11px] font-semibold text-slate-400 block mt-0.5">
+                <span className="text-[11px] font-semibold text-slate-500 block mt-0.5">
                   {category.itemCount}+ sản phẩm
                 </span>
               </div>

@@ -31,7 +31,7 @@ export function ProductShowcase() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6">
           <div>
-            <span className="text-xs font-bold text-teal-600 uppercase tracking-wider block mb-1">
+            <span className="text-xs font-bold text-teal-700 uppercase tracking-wider block mb-1">
               Gợi Ý Dành Cho Bạn
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">

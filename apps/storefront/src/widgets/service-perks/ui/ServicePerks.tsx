@@ -48,7 +48,7 @@ export function ServicePerks() {
                   <Icon className="w-6 h-6 stroke-[2]" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-slate-900">{perk.title}</h3>
+                  <h2 className="text-sm font-bold text-slate-900">{perk.title}</h2>
                   <p className="text-xs text-slate-500 leading-relaxed">{perk.description}</p>
                 </div>
               </div>

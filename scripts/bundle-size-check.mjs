@@ -103,6 +103,7 @@ if (updateBaseline) {
   writeFileSync(BASELINE_FILE, `${JSON.stringify(current, null, 2)}\n`);
   console.log(`\nBaseline updated → ${BASELINE_FILE}`);
   console.log(JSON.stringify(current));
+  process.exit(0);
 } else if (!baseline) {
   console.log(
     '\nNo baseline found. Run `node scripts/bundle-size-check.mjs --update` to record one.',

@@ -98,12 +98,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       {/* Card Info Section */}
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div className="space-y-1.5">
-          <span className="text-[11px] font-semibold text-teal-600 uppercase tracking-wider block">
+          <span className="text-[11px] font-semibold text-teal-700 uppercase tracking-wider block">
             {product.category}
           </span>
           <Link
             href={`/products/${product.slug}`}
-            className="text-sm font-bold text-slate-800 hover:text-teal-600 transition-colors line-clamp-2 leading-snug"
+            className="text-sm font-bold text-slate-800 hover:text-teal-700 transition-colors line-clamp-2 leading-snug"
             title={product.name}
           >
             {product.name}
@@ -116,11 +116,11 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             <Star className="w-3.5 h-3.5 fill-current" />
           </div>
           <span className="font-bold text-slate-800">{product.rating}</span>
-          <span className="text-slate-400">({product.reviewCount})</span>
+          <span className="text-slate-500">({product.reviewCount})</span>
           {product.soldCount && (
             <>
               <span className="text-slate-300">•</span>
-              <span className="text-slate-500 text-[11px]">Đã bán {product.soldCount}</span>
+              <span className="text-slate-600 text-[11px]">Đã bán {product.soldCount}</span>
             </>
           )}
         </div>
@@ -132,7 +132,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               {formatPrice(product.price)}
             </div>
             {product.originalPrice && (
-              <div className="text-xs text-slate-400 line-through">
+              <div className="text-xs text-slate-500 line-through">
                 {formatPrice(product.originalPrice)}
               </div>
             )}
@@ -141,6 +141,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           <button
             type="button"
             onClick={handleAddToCart}
+            aria-label={`Thêm ${product.name} vào giỏ hàng`}
             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
               isAdded
                 ? 'bg-emerald-600 text-white shadow-md scale-105'

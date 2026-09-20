@@ -160,16 +160,17 @@ export function AccordionGallery({
                   </span>
                 )}
                 <div className="flex items-center justify-between gap-2">
-                  <h3
-                    className="text-lg sm:text-xl font-bold tracking-tight line-clamp-1"
+                  <span
+                    className="text-lg sm:text-xl font-bold tracking-tight line-clamp-1 block"
                     style={{ color: textColor }}
                   >
                     {item.label}
-                  </h3>
+                  </span>
 
                   {item.link && (
                     <Link
                       href={item.link}
+                      aria-label={item.label}
                       className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 ${
                         isExpanded
                           ? 'bg-white text-slate-900 scale-110 shadow-md'
